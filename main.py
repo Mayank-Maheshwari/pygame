@@ -1,5 +1,7 @@
+import time
 import pygame
 from random import shuffle
+from solution import control
 
 black = (0, 0, 0)
 white = (255, 255, 255)
@@ -11,7 +13,10 @@ square_side = 150
 total_no_block = column_count * row_count
 
 frame_height = column_count * 200
-frame_width = row_count*200+200
+if frame_height >= 800:
+    frame_height = 700
+    square_side = 120
+frame_width = row_count * 200 + 200
 
 pygame.init()
 display = pygame.display.set_mode((frame_width, frame_height))
@@ -47,6 +52,33 @@ def message_display(text, x, y, font_size):
 def game_quit():
     pygame.quit()
     quit()
+
+
+def get_solution():
+    result = control(Problem.problem)
+    print(result)
+    for move in result:
+        if move == "Right":
+            print("left")
+            Puzzel.move_left()
+        elif move =="Left":
+            print("right")
+            Puzzel.move_right()
+        elif move == "Down":
+            print("up")
+            Puzzel.move_up()
+        elif move == "Up":
+            print("down")
+            Puzzel.move_down()
+        display.fill(white)
+        Puzzel.paint()
+        button(frame_width * .2, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "New Game", 30,)
+        button(frame_width * .4, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "Reset", 30,)
+        button(frame_width * .6, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "Solve", 30,)
+        clock.tick(1)
+        pygame.display.update()
+
+    Problem.check_goal()
 
 
 def start():
@@ -89,13 +121,34 @@ class Square:
             message_display(self.message, self.x + self.side / 2, self.y + self.side / 2, font_size=size)
 
 
-class Problem:
-    problem = [i for i in range(total_no_block)]
 
-    shuffle(problem)
+class Problem:
+
+    problem = [i for i in range(total_no_block)]
+    p = [i for i in problem]
+
+    @staticmethod
+    def new_game():
+        Problem.problem.clear()
+        for i in range(total_no_block):
+            Problem.problem.append(i)
+        Problem.print_problem()
+        shuffle(Problem.problem)
+        Problem.p.clear()
+        for i in Problem.problem:
+            Problem.p.append(i)
+        Puzzel.create_puzzel()
+
+    @staticmethod
+    def reset():
+        Problem.problem.clear()
+        for i in Problem.p:
+            Problem.problem.append(i)
+        Puzzel.create_puzzel()
 
     @staticmethod
     def create_problem():
+        global problem
         Problem.problem.clear()
         for slide in Puzzel.slides:
             Problem.problem.append(int(slide.message))
@@ -113,20 +166,28 @@ class Problem:
 
 
 class Puzzel:
-    slides = [Square(frame_width * 0.15 + 5 + ((i % row_count) * square_side), frame_height * 0.05 + 5 + (int(i / column_count) * square_side), square_side-5,
-                     str(Problem.problem[i])) for i in range(total_no_block)]
 
-    x_coodinates = [frame_width*0.15+5+i*square_side for i in range(row_count)]
-    y_coodinates = [frame_height*0.05+5+i*square_side for i in range(column_count)]
+    slides = [Square(frame_width * 0.15 + 5 + ((i % row_count) * square_side),
+                     frame_height * 0.05 + 5 + (int(i / column_count) * square_side), square_side - 5,
+                     str(Problem.problem[i])) for i in range(total_no_block)]
+    x_coodinates = [frame_width * 0.15 + 5 + i * square_side for i in range(row_count)]
+    y_coodinates = [frame_height * 0.05 + 5 + i * square_side for i in range(column_count)]
+
+    @staticmethod
+    def create_puzzel():
+        Puzzel.slides = [Square(frame_width * 0.15 + 5 + ((i % row_count) * square_side),
+                         frame_height * 0.05 + 5 + (int(i / column_count) * square_side), square_side - 5,
+                         str(Problem.problem[i])) for i in range(total_no_block)]
+
     @staticmethod
     def paint():
-        Square(frame_width * 0.15, frame_height * 0.05, row_count*square_side + 5, None).draw_square(black, white)
+        Square(frame_width * 0.15, frame_height * 0.05, row_count * square_side + 5, None).draw_square(black, white)
         for i in Puzzel.slides:
             i.draw_square(black, white)
 
     @staticmethod
     def move_up():
-        if Square.zero_square.y == frame_height*0.05+(column_count-1)*square_side+5:
+        if Square.zero_square.y == frame_height * 0.05 + (column_count - 1) * square_side + 5:
             return
         else:
             side = Puzzel.find_Square_below(Square.zero_square.y, Square.zero_square.x)
@@ -140,7 +201,7 @@ class Puzzel:
 
     @staticmethod
     def move_down():
-        if Square.zero_square.y == frame_height*0.05+5:
+        if Square.zero_square.y == frame_height * 0.05 + 5:
             return
         else:
             side = Puzzel.find_Square_above(Square.zero_square.y, Square.zero_square.x)
@@ -155,7 +216,7 @@ class Puzzel:
 
     @staticmethod
     def move_left():
-        if Square.zero_square.x == frame_width*1.15+(row_count-1)*square_side+5:
+        if Square.zero_square.x == frame_width * 1.15 + (row_count - 1) * square_side + 5:
             return
         else:
             side = Puzzel.find_square_right(Square.zero_square.y, Square.zero_square.x)
@@ -169,7 +230,7 @@ class Puzzel:
 
     @staticmethod
     def move_right():
-        if Square.zero_square.x == frame_width*1.15+5:
+        if Square.zero_square.x == frame_width * 1.15 + 5:
             return
         else:
             side = Puzzel.find_square_left(Square.zero_square.y, Square.zero_square.x)
@@ -184,40 +245,56 @@ class Puzzel:
     @staticmethod
     def find_Square_below(y, x):
         i = Puzzel.y_coodinates.index(y)
-        found_y = Puzzel.y_coodinates[i + 1]
-        for slide in Puzzel.slides:
-            if x == slide.x:
-                if slide.y ==found_y:
-                    return slide
+        try:
+            found_y = Puzzel.y_coodinates[i + 1]
+            for slide in Puzzel.slides:
+                if x == slide.x:
+                    if slide.y == found_y:
+                        return slide
+        except:
+            print("error")
+
     @staticmethod
     def find_Square_above(y, x):
         i = Puzzel.y_coodinates.index(y)
-        found_y = Puzzel.y_coodinates[i - 1]
+        try:
+            found_y = Puzzel.y_coodinates[i - 1]
 
-        for slide in Puzzel.slides:
-            if x == slide.x:
-                if slide.y ==found_y:
-                    return slide
+            for slide in Puzzel.slides:
+                if x == slide.x:
+                    if slide.y == found_y:
+                        return slide
+        except:
+            print("error")
+
     @staticmethod
     def find_square_right(y, x):
         i = Puzzel.x_coodinates.index(x)
-        found_x = Puzzel.x_coodinates[i+1]
-        for slide in Puzzel.slides:
-            if y == slide.y:
-                if slide.x == found_x:
+        try:
+            found_x = Puzzel.x_coodinates[i + 1]
+            for slide in Puzzel.slides:
+                if y == slide.y:
+                    if slide.x == found_x:
                         return slide
+        except:
+            print("error")
 
     @staticmethod
     def find_square_left(y, x):
         i = Puzzel.x_coodinates.index(x)
-        found_x = Puzzel.x_coodinates[i-1]
-        for slide in Puzzel.slides:
-            if y == slide.y:
-                if slide.x == found_x:
+        try:
+            found_x = Puzzel.x_coodinates[i - 1]
+            for slide in Puzzel.slides:
+                if y == slide.y:
+                    if slide.x == found_x:
                         return slide
+        except:
+            print("error")
+
 
 def main():
     pygame.display.set_caption('8-Puzzle')
+    Problem.create_problem()
     Problem.print_problem()
     while True:
         for event in pygame.event.get():
@@ -240,7 +317,10 @@ def main():
                     Puzzel.move_down()
         display.fill(white)
         Puzzel.paint()
-        #button(100,530, 60, 175, (200, 200, 200), (225, 225, 225), "New Game", 30)
+        button(frame_width * .2, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "New Game", 30, Problem.new_game)
+        button(frame_width * .4, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "Reset", 30, Problem.reset)
+        button(frame_width * .6, frame_height * .85, 60, 175, (200, 200, 200), (225, 225, 225), "Solve", 30,get_solution)
+        clock.tick(15)
         pygame.display.update()
 
 
